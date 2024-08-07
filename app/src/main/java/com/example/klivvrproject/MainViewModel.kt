@@ -20,11 +20,16 @@ class CityViewModel : ViewModel() {
     }
 
     fun filterCities(prefix: String) {
-        val filteredCities= _cities.value?.let { cities ->
-            val citiesSearch = cities.filter { it.name.startsWith(prefix, ignoreCase = true) }
-            val countriesSearch = cities.filter { it.country.startsWith(prefix, ignoreCase = true) }
-            citiesSearch + countriesSearch
-        } ?: emptyList()
-        _filteredCities.value = filteredCities
+        if(prefix.isEmpty()){
+            _filteredCities.value = _cities.value?.sortedBy { it.name }
+        }else{
+            val filteredCities= _cities.value?.let { cities ->
+                val citiesSearch = cities.filter { it.name.startsWith(prefix, ignoreCase = true) }
+                val countriesSearch = cities.filter { it.country.startsWith(prefix, ignoreCase = true) }
+                citiesSearch + countriesSearch
+            } ?: emptyList()
+            _filteredCities.value = filteredCities
+        }
+
     }
 }
