@@ -14,8 +14,9 @@ class CityViewModel : ViewModel() {
     val filteredCities: LiveData<List<City>> get() = _filteredCities
 
     fun loadCities(jsonString: String) {
-        _cities.value = Json.decodeFromString(jsonString)
-        _filteredCities.value = _cities.value
+        val citiesList = Json.decodeFromString<List<City>>(jsonString)
+        _cities.value = citiesList
+        _filteredCities.value = citiesList.sortedBy { it.name }
     }
 
     fun filterCities(prefix: String) {
