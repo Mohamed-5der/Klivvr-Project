@@ -5,27 +5,24 @@ import android.os.Bundle
 import android.os.Handler
 import android.util.Log
 import android.view.View
-
 import androidx.activity.enableEdgeToEdge
+import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.widget.addTextChangedListener
-import androidx.lifecycle.lifecycleScope
-
+import androidx.lifecycle.Observer
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.klivvrproject.adapter.CityAdapter
 import com.example.klivvrproject.databinding.ActivityMainBinding
-import com.example.klivvrproject.model.City
+import com.example.klivvrproject.viewmodel.CityViewModel
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import kotlinx.serialization.builtins.ListSerializer
-import kotlinx.serialization.json.Json
 
 class MainActivity : AppCompatActivity() {
-
     private lateinit var binding: ActivityMainBinding
     private lateinit var cityAdapter: CityAdapter
-    private lateinit var cities: List<City>
+    private val cityViewModel: CityViewModel by viewModels()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -33,88 +30,57 @@ class MainActivity : AppCompatActivity() {
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
         configureData()
-        if (savedInstanceState != null) {
-            restoreState(savedInstanceState)
+        if (cityViewModel.cities.value == null) {
+            loadCities()
+        }else{
+            hideLoading()
         }
     }
 
     private fun configureData(){
+        showLoading()
         cityAdapter = CityAdapter(emptyList())
-        isLoading()
+        binding.rvCities.layoutManager = LinearLayoutManager(this)
+        binding.rvCities.adapter = cityAdapter
+        cityViewModel.filteredCities.observe(this, Observer { filteredCities ->
+            cityAdapter.updateData(filteredCities)
+            binding.rvCities.scrollToPosition(0)
+        })
+
         binding.searchInput.addTextChangedListener { text ->
-            filterCities(text.toString())
+            cityViewModel.filterCities(text.toString())
         }
-        getCities()
     }
 
-    private fun getCities(){
-        lifecycleScope.launch {
+    private fun loadCities() {
+        CoroutineScope(Dispatchers.IO).launch {
             try {
-                cities = loadCitiesFromAssets(this@MainActivity).sortedBy { it.name.lowercase() }
+                val jsonString = loadCitiesFromAssets(this@MainActivity)
                 withContext(Dispatchers.Main) {
-                    cityAdapter = CityAdapter(cities)
-                    binding.rvCities.layoutManager = LinearLayoutManager(this@MainActivity)
-                    binding.rvCities.adapter = cityAdapter
+                    cityViewModel.loadCities(jsonString)
                 }
             } catch (e: Exception) {
                 withContext(Dispatchers.Main) {
                     Log.e("MainActivity", "Error loading cities", e)
                 }
-            }finally {
-                hideLoading()
+            } finally {
+                withContext(Dispatchers.Main) {
+                    hideLoading()
+                }
             }
         }
     }
 
-    private fun loadCitiesFromAssets(context: Context): List<City> {
+    private fun loadCitiesFromAssets(context: Context): String {
         val inputStream = context.assets.open("cities.json")
-        val jsonString = inputStream.bufferedReader().use { it.readText() }
-        return Json.decodeFromString(jsonString)
+        return inputStream.bufferedReader().use { it.readText() }
     }
 
-    private fun filterCities(prefix: String) {
-        val citiesList :List<City>
-        if (prefix.isEmpty()){
-            citiesList = cities
-        }else{
-            val filteredCities = cities.filter {
-                it.name.startsWith(prefix, ignoreCase = true)
-            }
-            val filteredCounter = cities.filter {
-                it.country.startsWith(prefix, ignoreCase = true)
-            }
-            citiesList = filteredCities + filteredCounter
-        }
-        cityAdapter.updateData(citiesList)
-        binding.rvCities.scrollToPosition(0)
-    }
-
-    private fun isLoading(){
+    private fun showLoading() {
         binding.progressBar.visibility = View.VISIBLE
     }
 
-    private fun hideLoading(){
+    private fun hideLoading() {
         binding.progressBar.visibility = View.GONE
     }
-
-    override fun onSaveInstanceState(outState: Bundle) {
-        super.onSaveInstanceState(outState)
-        outState.putString("cities", Json.encodeToString(ListSerializer(City.serializer()), cities))
-        outState.putString("searchQuery", binding.searchInput.text.toString())
-    }
-
-    private fun restoreState(savedInstanceState: Bundle) {
-        val savedCities = savedInstanceState.getString("cities")
-        val searchQuery = savedInstanceState.getString("searchQuery")
-
-        if (savedCities != null) {
-            cities = Json.decodeFromString(ListSerializer(City.serializer()), savedCities)
-            cityAdapter.updateData(cities)
-        }
-        if (searchQuery != null) {
-            binding.searchInput.setText(searchQuery)
-            filterCities(searchQuery)
-        }
-    }
-
 }
