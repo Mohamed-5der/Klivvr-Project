@@ -18,6 +18,7 @@ import com.example.klivvrproject.model.City
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import kotlinx.serialization.builtins.ListSerializer
 import kotlinx.serialization.json.Json
 
 class MainActivity : AppCompatActivity() {
@@ -32,6 +33,9 @@ class MainActivity : AppCompatActivity() {
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
         configureData()
+        if (savedInstanceState != null) {
+            restoreState(savedInstanceState)
+        }
     }
 
     private fun configureData(){
@@ -51,13 +55,13 @@ class MainActivity : AppCompatActivity() {
                     cityAdapter = CityAdapter(cities)
                     binding.rvCities.layoutManager = LinearLayoutManager(this@MainActivity)
                     binding.rvCities.adapter = cityAdapter
-                    hideLoading()
                 }
             } catch (e: Exception) {
                 withContext(Dispatchers.Main) {
                     Log.e("MainActivity", "Error loading cities", e)
-                    hideLoading()
                 }
+            }finally {
+                hideLoading()
             }
         }
     }
@@ -91,6 +95,26 @@ class MainActivity : AppCompatActivity() {
 
     private fun hideLoading(){
         binding.progressBar.visibility = View.GONE
+    }
+
+    override fun onSaveInstanceState(outState: Bundle) {
+        super.onSaveInstanceState(outState)
+        outState.putString("cities", Json.encodeToString(ListSerializer(City.serializer()), cities))
+        outState.putString("searchQuery", binding.searchInput.text.toString())
+    }
+
+    private fun restoreState(savedInstanceState: Bundle) {
+        val savedCities = savedInstanceState.getString("cities")
+        val searchQuery = savedInstanceState.getString("searchQuery")
+
+        if (savedCities != null) {
+            cities = Json.decodeFromString(ListSerializer(City.serializer()), savedCities)
+            cityAdapter.updateData(cities)
+        }
+        if (searchQuery != null) {
+            binding.searchInput.setText(searchQuery)
+            filterCities(searchQuery)
+        }
     }
 
 }
