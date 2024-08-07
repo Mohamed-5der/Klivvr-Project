@@ -39,11 +39,14 @@
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             />
+
     </LinearLayout>
+
     <ProgressBar
         android:id="@+id/progressBar"
         android:layout_width="48dp"
         android:layout_height="48dp"
         android:visibility="visible"
         android:layout_centerInParent="true"/>
+
 </RelativeLayout>

@@ -15,7 +15,6 @@ import com.example.klivvrproject.model.City
 
 class CityAdapter(private var cities: List<City>) : RecyclerView.Adapter<CityAdapter.CityViewHolder>() {
 
-
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): CityViewHolder {
         val view = LayoutInflater.from(parent.context).inflate(R.layout.item_list_rv, parent, false)
         return CityViewHolder(view)
@@ -26,6 +25,7 @@ class CityAdapter(private var cities: List<City>) : RecyclerView.Adapter<CityAda
         holder.bind(city)
 
     }
+
     override fun getItemCount(): Int = cities.size
 
     fun updateData(newCities: List<City>) {
@@ -41,7 +41,6 @@ class CityAdapter(private var cities: List<City>) : RecyclerView.Adapter<CityAda
             cityName.text = "${city.name}, ${city.country}"
             cityCoordinates.text = "Lat: ${city.coordinates.lat} , Lon: ${city.coordinates.lon}"
             itemView.setOnClickListener {
-              //  Log.i("tag","${city.coordinates.lat},${city.coordinates.lon}")
                 val uri = "geo:${city.coordinates.lat},${city.coordinates.lon}"
                 val intent = Intent(Intent.ACTION_VIEW, Uri.parse(uri))
                 intent.setPackage("com.google.android.apps.maps")
