@@ -11,6 +11,7 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:orientation="vertical">
+
         <androidx.cardview.widget.CardView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -18,8 +19,8 @@
             android:layout_marginEnd="8dp"
             android:layout_marginStart="8dp"
             app:cardElevation="4dp"
-            app:cardCornerRadius="4dp"
-            >
+            app:cardCornerRadius="4dp">
+
             <EditText
                 android:id="@+id/searchInput"
                 android:layout_width="match_parent"
@@ -29,9 +30,8 @@
                 android:lines="1"
                 android:hint="Enter city name"
                 />
+
         </androidx.cardview.widget.CardView>
-
-
 
         <androidx.recyclerview.widget.RecyclerView
             android:id="@+id/rvCities"
@@ -40,7 +40,6 @@
             android:layout_height="match_parent"
             />
     </LinearLayout>
-
     <ProgressBar
         android:id="@+id/progressBar"
         android:layout_width="48dp"

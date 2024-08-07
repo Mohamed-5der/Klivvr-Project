@@ -2,6 +2,7 @@ package com.example.klivvrproject
 
 import android.content.Context
 import android.os.Bundle
+import android.os.Handler
 import android.util.Log
 import android.view.View
 
@@ -28,13 +29,21 @@ class MainActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
-
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
+        configureData()
+    }
 
+    private fun configureData(){
         cityAdapter = CityAdapter(emptyList())
+        isLoading()
+        binding.searchInput.addTextChangedListener { text ->
+            filterCities(text.toString())
+        }
+        getCities()
+    }
 
-
+    private fun getCities(){
         lifecycleScope.launch {
             try {
                 cities = loadCitiesFromAssets(this@MainActivity).sortedBy { it.name.lowercase() }
@@ -42,18 +51,15 @@ class MainActivity : AppCompatActivity() {
                     cityAdapter = CityAdapter(cities)
                     binding.rvCities.layoutManager = LinearLayoutManager(this@MainActivity)
                     binding.rvCities.adapter = cityAdapter
-                    binding.progressBar.visibility = View.GONE
+                    hideLoading()
                 }
             } catch (e: Exception) {
                 withContext(Dispatchers.Main) {
-                    binding.progressBar.visibility = View.GONE
+                    Log.e("MainActivity", "Error loading cities", e)
+                    hideLoading()
                 }
             }
         }
-
-             binding.searchInput.addTextChangedListener {text ->
-                filterCities(text.toString())
-             }
     }
 
     private fun loadCitiesFromAssets(context: Context): List<City> {
@@ -62,13 +68,29 @@ class MainActivity : AppCompatActivity() {
         return Json.decodeFromString(jsonString)
     }
 
-
-
     private fun filterCities(prefix: String) {
-        val filteredCities = cities.filter {
-            it.name.startsWith(prefix, ignoreCase = true)
+        val citiesList :List<City>
+        if (prefix.isEmpty()){
+            citiesList = cities
+        }else{
+            val filteredCities = cities.filter {
+                it.name.startsWith(prefix, ignoreCase = true)
+            }
+            val filteredCounter = cities.filter {
+                it.country.startsWith(prefix, ignoreCase = true)
+            }
+            citiesList = filteredCities + filteredCounter
         }
-        cityAdapter.updateData(filteredCities)
+        cityAdapter.updateData(citiesList)
+        binding.rvCities.scrollToPosition(0)
+    }
+
+    private fun isLoading(){
+        binding.progressBar.visibility = View.VISIBLE
+    }
+
+    private fun hideLoading(){
+        binding.progressBar.visibility = View.GONE
     }
 
 }

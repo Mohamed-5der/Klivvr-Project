@@ -15,6 +15,7 @@ import com.example.klivvrproject.model.City
 
 class CityAdapter(private var cities: List<City>) : RecyclerView.Adapter<CityAdapter.CityViewHolder>() {
 
+
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): CityViewHolder {
         val view = LayoutInflater.from(parent.context).inflate(R.layout.item_list_rv, parent, false)
         return CityViewHolder(view)
